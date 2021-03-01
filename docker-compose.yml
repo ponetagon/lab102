@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+  db:
+    image: mariadb 
+    container_name: db
+    restart: unless-stopped
+    environment:
+      - MYSQL_DATABASE=wordpress
+      - MYSQL_ROOT_PASSWORD=P@ssw0rd
+      - MYSQL_USER=adminn
+      - MYSQL_PASSWORD=P@ssw0rd
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - app-network
+
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:5.1.1-fpm-alpine
+    container_name: wordpress
+    restart: unless-stopped
+    environment:
+      - WORDPRESS_DB_HOST=db:3306
+      - WORDPRESS_DB_USER=adminn
+      - WORDPRESS_DB_PASSWORD=P@ssw0rd
+      - WORDPRESS_DB_NAME=wordpress
+      - MYSQL_ROOT_PASSWORD=P@ssw0rd
+      - MYSQL_USER=adminn
+      - MYSQL_PASSWORD=P@ssw0rd
+    volumes:
+      - wordpress:/var/www/html
+    networks:
+      - app-network
+
+  webserver:
+    depends_on:
+      - wordpress
+    image: nginx:1.15.12-alpine
+    container_name: webserver
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - wordpress:/var/www/html
+      - ./nginx-conf:/etc/nginx/conf.d
+    networks:
+      - app-network
+volumes:
+  wordpress:
+  dbdata:
+networks:
+  app-network:
+    driver: bridge
